@@ -1,14 +1,13 @@
-# Faceless AI Site
+# Faceless AI Site (Auto Blog)
 
-Tento projekt automaticky generuje články pomocou AI a nasadzuje ich na web cez Hugo a Cloudflare Pages.
+This repo auto-publishes one new article per day with a relevant Unsplash image.
 
-## Ako to spustiť
+## Quick start (super simple)
+1) Upload this whole folder to your GitHub repo **2a0g0h2/faceless-ai-site** on branch `main`.
+2) No extra setup needed — GitHub Actions is preconfigured and will run daily.
+3) Connect this repo to **Cloudflare Pages** (Build command: none, Output directory: `/`).
+4) Done. Every day, a new post appears automatically.
 
-1. Vytvor si účet na GitHub a Cloudflare.
-2. Na GitHube založ nové repo a nahraj tieto súbory.
-3. V Cloudflare Pages prepoj repo, nastav Hugo build (`hugo`, output `public`).
-4. GitHub Actions každý deň o 08:00 UTC spustí `generate_articles.py` a pridá nové články.
-
-Úpravy:
-- **data/keywords.csv** – pridaj svoje témy
-- **data/affiliates.json** – pridaj svoje affiliate odkazy
+### Notes
+- To change posting time: edit `.github/workflows/daily_post.yml` (the `cron` line).
+- To tweak topics or formatting: edit `scripts/generate_post.py`.
