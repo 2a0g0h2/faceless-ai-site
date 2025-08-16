@@ -1,34 +1,44 @@
-import os, glob
+import os
+import json
 
-posts = []
-for file in sorted(glob.glob("posts/*.html"), reverse=True):
-    with open(file, "r", encoding="utf-8") as f:
-        content = f.read()
-    title_start = content.find("<h1>")
-    title_end = content.find("</h1>")
-    title = content[title_start+4:title_end] if title_start != -1 else "Untitled"
-    posts.append((os.path.basename(file), title))
+def main():
+    posts = []
+    for file in os.listdir("posts"):
+        if file.endswith(".json"):
+            with open(os.path.join("posts", file)) as f:
+                posts.append(json.load(f))
 
-cards = ""
-for filename, title in posts:
-    cards += f"""
-    <div class="card">
-        <img src="https://picsum.photos/400/200" alt="Cover">
-        <h2>{title}</h2>
-        <a href="posts/{filename}" class="btn">Read more</a>
+    posts.sort(key=lambda x: x["date"], reverse=True)
+
+    cards_html = ""
+    for post in posts:
+        slug = f"{post['date']}-{post['title'].lower().replace(' ', '-')}.html"
+        cards_html += f"""
+        <div class="card">
+            <img src="{post['image']}" alt="{post['title']}">
+            <h2>{post['title']}</h2>
+            <p>{post['excerpt']}</p>
+            <a href="posts/{slug}" class="btn">Read More</a>
+        </div>
+        """
+
+    html = f"""
+<html>
+  <head>
+    <title>AI Blog</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <h1>AI Daily Insights</h1>
+    <div class="grid">
+      {cards_html}
     </div>
+  </body>
+</html>
     """
 
-index_html = f"""<html><head>
-<meta charset="UTF-8">
-<title>Faceless AI Blog</title>
-<link rel="stylesheet" href="style.css">
-</head><body>
-<h1>Faceless AI Blog</h1>
-<div class="grid">
-{cards}
-</div>
-</body></html>"""
+    with open("index.html", "w") as f:
+        f.write(html)
 
-with open("index.html", "w", encoding="utf-8") as f:
-    f.write(index_html)
+if __name__ == "__main__":
+    main()
