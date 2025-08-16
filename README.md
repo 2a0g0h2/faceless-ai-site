@@ -1,7 +1,3 @@
-# Faceless AI Site
+# Faceless AI Blog
 
-This project automatically generates daily AI-written blog posts with Unsplash images.
-
-- Runs once per day via GitHub Actions
-- Creates `.md` and `.html` versions of each post
-- Topics are randomly chosen from trending keywords
+This repo automatically generates daily AI blog posts with images from Unsplash.
