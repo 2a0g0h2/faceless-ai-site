@@ -2,8 +2,8 @@ name: Daily AI Post
 
 on:
   schedule:
-    - cron: "0 9 * * *"   # každý deň o 09:00 UTC
-  workflow_dispatch:       # manuálne spustenie
+    - cron: "0 9 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -12,12 +12,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.x'
 
       - name: Install dependencies
         run: pip install requests beautifulsoup4
@@ -30,8 +31,8 @@ jobs:
 
       - name: Commit changes
         run: |
+          git config --local user.name "github-actions[bot]"
           git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Add new daily AI post" || echo "No changes"
+          git commit -m "Add new daily AI post"
           git push
