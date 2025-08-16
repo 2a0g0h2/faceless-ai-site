@@ -63,3 +63,39 @@ h1 {
 .btn:hover {
   background: #3730a3;
 }
+/* --- Štýly článku --- */
+.post {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #1a1a1a;
+  color: #f0f0f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  line-height: 1.6;
+}
+
+.post-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.post-header h1 {
+  font-size: 2em;
+  margin-bottom: 15px;
+  color: #fff;
+}
+
+.post-header img {
+  max-width: 100%;
+  height: auto;
+  max-height: 400px;   /* obmedzenie výšky */
+  object-fit: cover;   /* pekné orezanie */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.post-content p {
+  margin-bottom: 16px;
+  font-size: 1.1em;
+}
