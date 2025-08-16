@@ -1,90 +1,85 @@
 import os
-import random
-import datetime
 import json
+from datetime import datetime
+import random
 
-# Náhodné témy
+# Tu môžeš pridať viac tém podľa trendov
 TOPICS = [
-    "The Future of Artificial Intelligence",
     "AI in Healthcare",
-    "AI and Creativity",
-    "The Rise of Generative Models",
-    "Ethics of AI",
-    "AI in Education",
-    "AI and Climate Change",
-    "The Future of Work with AI",
-    "AI in Gaming",
-    "AI and Human Emotions",
+    "Future of Electric Vehicles",
+    "Space Tourism",
+    "Neuroscience Breakthroughs",
+    "Sustainable Fashion",
+    "Quantum Computing Trends",
+    "Virtual Reality in Education",
+    "Green Energy Innovations",
+    "Cryptocurrency Regulation",
+    "Smart Home Technology"
 ]
 
-INTRO_TEMPLATES = [
-    "Artificial Intelligence is rapidly transforming our world. In this article, we explore {topic} and what it means for the future.",
-    "The topic of {topic} has become increasingly relevant in recent years. Let's dive deeper into how it affects us today.",
-    "From research labs to our daily lives, {topic} is shaping the way we think about technology.",
-]
+# Funkcia na generovanie textu článku
+def generate_article(topic):
+    intro = f"Explore the latest insights on {topic}. This article covers key developments and their impact in 2025."
+    body = "\n\n".join([f"Section {i+1}: Lorem ipsum dolor sit amet, consectetur adipiscing elit." for i in range(random.randint(3,6))])
+    conclusion = f"In conclusion, {topic} continues to shape the industry, offering new opportunities and challenges."
+    return intro, body, conclusion
 
-CONCLUSION_TEMPLATES = [
-    "In conclusion, {topic} will continue to be a driving force in shaping our future.",
-    "As we've seen, {topic} is more than just a trend — it's a transformation.",
-    "Ultimately, {topic} challenges us to think bigger and act smarter.",
-]
-
-def generate_article():
-    topic = random.choice(TOPICS)
-    intro = random.choice(INTRO_TEMPLATES).format(topic=topic)
-    conclusion = random.choice(CONCLUSION_TEMPLATES).format(topic=topic)
-
-    body = (
-        f"<h2>Introduction</h2><p>{intro}</p>"
-        f"<h2>Main Insights</h2><p>{topic} is impacting industries, research, and daily life. "
-        f"We see innovations, but also challenges — ethical, social, and economic.</p>"
-        f"<p>Experts suggest that while the potential is enormous, regulation, education, and awareness will be key "
-        f"to ensuring positive outcomes.</p>"
-        f"<h2>Conclusion</h2><p>{conclusion}</p>"
-    )
-
-    return topic, intro, body
-
+# Funkcia na generovanie cover image URL (placeholder)
 def generate_cover_image(topic):
-    # Jednoduchá reprezentácia obrázka
-    return f"https://source.unsplash.com/1200x600/?technology,{topic.replace(' ', '')}"
+    # Použijeme náhodný obrázok z placeholder API
+    width = 1200
+    height = 600
+    return f"https://picsum.photos/seed/{topic.replace(' ','_')}/{width}/{height}"
 
 def main():
-    today = datetime.date.today().isoformat()
-    topic, intro, body = generate_article()
+    # Vyber náhodnú tému
+    topic = random.choice(TOPICS)
+    
+    # Generuj článok
+    intro, body, conclusion = generate_article(topic)
     cover_image = generate_cover_image(topic)
-
-    # HTML obsah
-    html_content = f"""<!DOCTYPE html>
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    
+    # Priprav názvy súborov
+    safe_title = topic.lower().replace(" ", "-")
+    base_path = os.path.join("posts", f"{today}-{safe_title}")
+    
+    # Ulož Markdown
+    with open(base_path + ".md", "w", encoding="utf-8") as f:
+        f.write(f"# {topic}\n\n![Cover]({cover_image})\n\n{intro}\n\n{body}\n\n{conclusion}")
+    
+    # Ulož HTML
+    with open(base_path + ".html", "w", encoding="utf-8") as f:
+        f.write(f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{topic}</title>
-  <link rel="stylesheet" href="../style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{topic}</title>
+<link rel="stylesheet" href="../style.css">
 </head>
 <body>
-  <div class="post-container">
-    <div class="post-card">
-      <img src="{cover_image}" alt="Cover image for {topic}" class="post-cover">
-      <div class="post-content">
-        <h1>{topic}</h1>
-        {body}
-      </div>
-    </div>
-  </div>
+<article>
+<h1>{topic}</h1>
+<img src="{cover_image}" alt="{topic} cover" class="cover-image">
+<p>{intro}</p>
+<p>{body}</p>
+<p>{conclusion}</p>
+</article>
 </body>
-</html>"""
-
-    # Uloženie
-    os.makedirs("posts", exist_ok=True)
-    base_path = f"posts/{today}-{topic.lower().replace(' ', '-')}"
-    with open(base_path + ".html", "w", encoding="utf-8") as f:
-        f.write(html_content)
-    with open(base_path + ".md", "w", encoding="utf-8") as f:
-        f.write(f"# {topic}\n\n{intro}\n\n{body}\n\n{cover_image}")
+</html>""")
+    
+    # Ulož JSON
     with open(base_path + ".json", "w", encoding="utf-8") as f:
-        json.dump({"title": topic, "intro": intro, "image": cover_image}, f)
+        json.dump({
+            "title": topic,
+            "intro": intro,
+            "image": cover_image,
+            "date": today  # Dôležité pre update_index.py
+        }, f, ensure_ascii=False, indent=2)
+    
+    print(f"Generated article: {base_path}.md/.html/.json")
 
 if __name__ == "__main__":
     main()
+
