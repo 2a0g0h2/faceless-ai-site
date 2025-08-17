@@ -6,7 +6,6 @@ INDEX_FILE = "index.html"
 def update_index():
     posts = []
 
-    # prejde všetky súbory v posts/
     for f in os.listdir(POSTS_DIR):
         if f.endswith(".html"):
             path = os.path.join(POSTS_DIR, f)
@@ -19,13 +18,13 @@ def update_index():
                 else:
                     title = f
 
-                # dátum – ak chýba, nastavíme default
+                # dátum
                 if '<p class="date">' in html:
                     date = html.split('<p class="date">')[1].split("</p>")[0]
                 else:
                     date = "Unknown date"
 
-                # obrázok – ak chýba, použijeme placeholder
+                # obrázok
                 if '<img src="' in html:
                     image = html.split('<img src="')[1].split('"')[0]
                 else:
@@ -33,10 +32,9 @@ def update_index():
 
                 posts.append((date, title, f, image))
 
-    # zoradíme podľa dátumu (najnovšie navrch)
+    # zoradíme podľa dátumu (najnovšie hore)
     posts.sort(reverse=True, key=lambda x: x[0])
 
-    # vygenerujeme nový obsah index.html
     cards = ""
     for date, title, filename, image in posts:
         cards += f"""
@@ -70,6 +68,8 @@ def update_index():
 
     with open(INDEX_FILE, "w", encoding="utf-8") as f:
         f.write(html_content)
+
+    print("✅ index.html updated!")
 
 if __name__ == "__main__":
     update_index()
