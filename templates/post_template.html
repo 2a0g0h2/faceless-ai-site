@@ -1,19 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>{{title}}</title>
-  <link rel="stylesheet" href="../style.css">
-</head>
-<body>
-  <div class="container">
-    <h1>{{title}}</h1>
-    <p class="date">{{date}}</p>
-    <img src="{{image_url}}" alt="{{title}}">
-    <div class="content">
-      {{content}}
-    </div>
-    <p><a href="../index.html">← Back to Home</a></p>
+<div class="post-container">
+  <h1>{{ post.title }}</h1>
+  <p class="meta">{{ post.date }} | {{ post.author }}</p>
+  
+  {% if post.image %}
+  <img src="{{ post.image }}" alt="{{ post.title }}">
+  {% endif %}
+  
+  <div class="post-content">
+    {{ post.content | safe }}
   </div>
-</body>
-</html>
+</div>
