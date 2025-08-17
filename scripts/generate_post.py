@@ -1,52 +1,54 @@
 import os
 import datetime
-import requests
-import json
-from pathlib import Path
+import random
 
-POSTS_DIR = Path(__file__).parent.parent / "posts"
-IMAGES_DIR = Path(__file__).parent.parent / "images"
+POSTS_DIR = "../posts"
+IMAGES_DIR = "../images"
 
-# Vytvorenie adresárov ak neexistujú
-POSTS_DIR.mkdir(exist_ok=True)
-IMAGES_DIR.mkdir(exist_ok=True)
+if not os.path.exists(POSTS_DIR):
+    os.makedirs(POSTS_DIR)
 
-def generate_ai_content():
-    # Tu bude volanie AI generátora obsahu
-    # Príklad štruktúry článku
-    title = "AI Generated Post " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    content = "Toto je automaticky generovaný článok AI. " * 20
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
-    return title, content, date
+if not os.path.exists(IMAGES_DIR):
+    os.makedirs(IMAGES_DIR)
 
-def generate_ai_image():
-    # Tu bude volanie AI generátora obrázku (napr. Unsplash API alebo iný)
-    # Pre test použijeme placeholder
-    image_url = "https://source.unsplash.com/800x600/?technology"
-    response = requests.get(image_url)
-    image_name = f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}.jpg"
-    image_path = IMAGES_DIR / image_name
-    with open(image_path, "wb") as f:
-        f.write(response.content)
-    return f"../images/{image_name}"
+def generate_unique_filename(prefix="post", ext="html"):
+    now = datetime.datetime.now()
+    timestamp = now.strftime("%Y%m%d%H%M%S")
+    rand = random.randint(1000, 9999)
+    return f"{prefix}_{timestamp}_{rand}.{ext}"
 
-def create_post_file(title, content, date, image_path):
-    slug = title.lower().replace(" ", "-")
-    post_file = POSTS_DIR / f"{slug}.html"
-    html_content = f"""<div class="post-container">
-<h1>{title}</h1>
-<p class="meta">{date}</p>
-<img src="{image_path}" alt="{title}">
-<p>{content}</p>
-</div>"""
-    with open(post_file, "w", encoding="utf-8") as f:
-        f.write(html_content)
-    print(f"Post created: {post_file}")
+def generate_post_content(title, image_filename):
+    # Obsah článku – nadpisy, odstavce
+    content = f"""
+    <div class="post-container">
+        <h1>{title}</h1>
+        <p class="meta">{datetime.datetime.now().strftime("%d.%m.%Y")}</p>
+        <img src="../images/{image_filename}" alt="{title}">
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus imperdiet...</p>
+        <h2>Podnadpis 1</h2>
+        <p>Viac textu, príklady a vysvetlenia...</p>
+        <h2>Podnadpis 2</h2>
+        <p>Ďalší obsah článku, zaujímavé info...</p>
+    </div>
+    """
+    return content
 
-def main():
-    title, content, date = generate_ai_content()
-    image_path = generate_ai_image()
-    create_post_file(title, content, date, image_path)
+def generate_post():
+    title = f"Automaticky generovaný článok {random.randint(100,999)}"
+    html_filename = generate_unique_filename()
+    image_filename = generate_unique_filename(prefix="img", ext="png")
+    
+    # Vytvor prázdny obrázok ako placeholder
+    from PIL import Image
+    img = Image.new("RGB", (800, 400), color=(random.randint(0,255), random.randint(0,255), random.randint(0,255)))
+    img.save(os.path.join(IMAGES_DIR, image_filename))
+
+    content = generate_post_content(title, image_filename)
+    
+    with open(os.path.join(POSTS_DIR, html_filename), "w", encoding="utf-8") as f:
+        f.write(content)
+    
+    print(f"Post {title} vygenerovaný: {html_filename}")
 
 if __name__ == "__main__":
-    main()
+    generate_post()
