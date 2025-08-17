@@ -1,7 +1,7 @@
 import os
 import datetime
 
-POSTS_DIR = "../posts"
+POSTS_DIR = "posts"
 INDEX_FILE = "../index.html"
 
 def update_index():
