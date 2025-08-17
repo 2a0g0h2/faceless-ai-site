@@ -4,81 +4,66 @@ import datetime
 POSTS_DIR = "../posts"
 INDEX_FILE = "../index.html"
 
-def get_posts():
+def update_index():
+    # zoznam článkov
     posts = []
-    for file in os.listdir(POSTS_DIR):
-        if file.endswith(".html"):
-            path = os.path.join(POSTS_DIR, file)
-            with open(path, "r", encoding="utf-8") as f:
-                content = f.read()
+    for f in os.listdir(POSTS_DIR):
+        if f.endswith(".html"):
+            path = os.path.join(POSTS_DIR, f)
+            mtime = os.path.getmtime(path)
+            posts.append((f, mtime))
 
-            # Extract title
-            title_start = content.find("<h1>") + 4
-            title_end = content.find("</h1>")
-            title = content[title_start:title_end].strip()
+    # zoradenie podľa dátumu
+    posts.sort(key=lambda x: x[1], reverse=True)
 
-            # Extract date
-            date_start = content.find('<p class="date">') + len('<p class="date">')
-            date_end = content.find("</p>", date_start)
-            date = content[date_start:date_end].strip()
+    # vygenerovanie HTML
+    post_items = ""
+    for f, _ in posts:
+        filepath = os.path.join(POSTS_DIR, f)
+        with open(filepath, "r", encoding="utf-8") as pf:
+            html = pf.read()
 
-            # Extract excerpt = first <p> after date
-            first_p_start = content.find("<p>", date_end) + 3
-            first_p_end = content.find("</p>", first_p_start)
-            excerpt = content[first_p_start:first_p_end].strip()
+            # vyber title, excerpt a cover image
+            title = html.split("<h1>")[1].split("</h1>")[0]
+            date = html.split('<p class="date">')[1].split("</p>")[0]
+            excerpt = html.split("<p>")[1].split("</p>")[0]
+            cover = ""
+            if '<img src="' in html:
+                cover = html.split('<img src="')[1].split('"')[0]
 
-            # Extract cover
-            img_start = content.find('<img src="') + len('<img src="')
-            img_end = content.find('"', img_start)
-            cover = content[img_start:img_end]
-
-            posts.append({
-                "file": file,
-                "title": title,
-                "date": date,
-                "excerpt": excerpt,
-                "cover": cover
-            })
-
-    posts.sort(key=lambda x: x["date"], reverse=True)
-    return posts
-
-def build_index(posts):
-    cards = ""
-    for post in posts:
-        cards += f"""
-        <div class="card">
-          <a href="posts/{post['file']}">
-            <img src="{post['cover']}" alt="{post['title']}">
-            <h2>{post['title']}</h2>
-          </a>
-          <p class="date">{post['date']}</p>
-          <p>{post['excerpt']}</p>
+        post_items += f"""
+        <div class="post-card">
+            <a href="posts/{f}">
+                <img src="{cover}" alt="cover" class="thumb">
+                <h2>{title}</h2>
+                <p class="date">{date}</p>
+                <p>{excerpt}</p>
+            </a>
         </div>
         """
 
-    html = f"""<!DOCTYPE html>
+    index_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Faceless AI Blog</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Faceless AI Blog</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Faceless AI Blog</h1>
-  <div class="grid">
-    {cards}
-  </div>
+    <header>
+        <h1>Faceless AI Blog</h1>
+        <p>Daily auto-generated posts about AI, technology and the future 🚀</p>
+    </header>
+    <main class="post-grid">
+        {post_items}
+    </main>
 </body>
 </html>"""
-    return html
 
-def main():
-    posts = get_posts()
-    html = build_index(posts)
     with open(INDEX_FILE, "w", encoding="utf-8") as f:
-        f.write(html)
-    print("index.html updated with", len(posts), "posts")
+        f.write(index_html)
+
+    print("✅ Index updated with", len(posts), "posts")
 
 if __name__ == "__main__":
-    main()
+    update_index()
