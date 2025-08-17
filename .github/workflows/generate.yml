@@ -20,7 +20,8 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip install requests pillow
+          pip install requests
+          pip install Pillow
 
       - name: Generate post
         run: python3 scripts/generate_post.py
