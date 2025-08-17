@@ -1,15 +1,33 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Faceless AI Site</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <h1 style="text-align:center; margin:30px 0;">Faceless AI Articles</h1>
-  <div id="posts-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px; padding:20px;">
-    <!-- Post cards sa doplnia cez update_index.py -->
-  </div>
-</body>
-</html>
+    <html>
+    <head>
+        <title>Faceless AI Site</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .post { margin-bottom: 30px; transition: transform 0.2s; }
+            .post:hover { transform: translateY(-5px); }
+            img { display:block; margin-bottom: 10px; }
+        </style>
+    </head>
+    <body>
+        <h1>Faceless AI Blog</h1>
+        
+        <div class="post">
+            <a href="posts/Test_Article_2025-08-17_004705.html">
+                <img src="../images/hands-2178566_1280.jpg" alt="Test Article 2025-08-17 00:47:05" style="max-width:200px;height:auto;">
+                <h2>Test Article 2025-08-17 00:47:05</h2>
+                <p>This is a short excerpt for the article.</p>
+            </a>
+        </div>
+        
+        <div class="post">
+            <a href="posts/The_Future_of_Artificial_Intelligence.html">
+                <img src="" alt="The Future of Artificial Intelligence" style="max-width:200px;height:auto;">
+                <h2>The Future of Artificial Intelligence</h2>
+                <p>The Future of Artificial Intelligence is one of the hottest topics today...</p>
+            </a>
+        </div>
+        
+    </body>
+    </html>
+    
