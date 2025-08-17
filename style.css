@@ -1,101 +1,84 @@
+/* style.css */
+
+/* Reset a základ */
 body {
-  font-family: Arial, sans-serif;
-  background: #0f1116;
-  color: #e0e0e0;
+  font-family: 'Arial', sans-serif;
   margin: 0;
   padding: 0;
-  text-align: center;
-}
-
-h1 {
-  margin: 30px;
-  color: #ffffff;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
-  padding: 20px;
-}
-
-.card {
-  background: #1a1c23;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  text-align: left;
-  transition: transform 0.2s ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-}
-
-.card img {
-  width: 100%;
-  border-radius: 12px;
-  margin-bottom: 15px;
-}
-
-.card h2 {
-  margin-top: 0;
-  font-size: 20px;
-  color: #fff;
-}
-
-.card p {
-  color: #bbb;
-  font-size: 15px;
-  line-height: 1.5;
-}
-
-.btn {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  background: #4f46e5;
-  color: white;
-  text-decoration: none;
-}
-
-.btn:hover {
-  background: #3730a3;
-}
-/* --- Štýly článku --- */
-.post {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 20px;
-  background: #1a1a1a;
-  color: #f0f0f0;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  background-color: #fdfdfd;
+  color: #222;
   line-height: 1.6;
 }
 
+/* Header článku */
 .post-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin: 30px 0;
 }
 
 .post-header h1 {
-  font-size: 2em;
-  margin-bottom: 15px;
-  color: #fff;
+  font-size: 2.5rem;
+  margin-bottom: 10px;
 }
 
-.post-header img {
-  max-width: 100%;
+/* Cover image */
+.post-cover {
+  display: block;
+  max-width: 800px;
+  width: 90%;
   height: auto;
-  max-height: 400px;   /* obmedzenie výšky */
-  object-fit: cover;   /* pekné orezanie */
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  margin: 0 auto 30px auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  object-fit: cover;
+}
+
+/* Článok obsah */
+.post-content {
+  max-width: 800px;
+  margin: 0 auto 50px auto;
+  padding: 0 15px;
 }
 
 .post-content p {
-  margin-bottom: 16px;
-  font-size: 1.1em;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
 }
+
+/* Oddeľovače sekcií */
+.post-content hr {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 40px 0;
+}
+
+/* Main page karty */
+.post-card {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.post-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+.post-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.post-card h2 {
+  margin: 10px;
+  font-size: 1.5rem;
+}
+
+.post-card p {
+  margin: 10px;
+  font-size: 1rem;
+  color: #555;
+}
+
