@@ -1,50 +1,59 @@
 import os
-from pathlib import Path
 
-POSTS_DIR = Path(__file__).parent.parent / "posts"
-INDEX_FILE = Path(__file__).parent.parent / "index.html"
+POSTS_DIR = "../posts"
+INDEX_FILE = "../index.html"
 
 def update_index():
-    POSTS_DIR.mkdir(exist_ok=True)
-    posts_html = []
-
-    for f in sorted(POSTS_DIR.iterdir(), reverse=True):
-        if f.suffix == ".html":
-            with open(f, "r", encoding="utf-8") as file:
+    posts = []
+    for f in sorted(os.listdir(POSTS_DIR), reverse=True):
+        if f.endswith(".html"):
+            with open(os.path.join(POSTS_DIR, f), "r", encoding="utf-8") as file:
                 html = file.read()
-                # Bezpečne extrahovanie dátumu a nadpisu
-                date = html.split('<p class="meta">')[1].split("</p>")[0] if '<p class="meta">' in html else "N/A"
-                title = html.split("<h1>")[1].split("</h1>")[0] if "<h1>" in html else "Untitled"
-                img_tag = ""
-                if "<img " in html:
-                    img_tag = html.split("<img ")[1].split(">")[0]
-                    img_tag = "<img " + img_tag + ">"
-                posts_html.append(f"""
-<div class="post-card">
-    {img_tag}
-    <div class="post-card-content">
-        <h2>{title}</h2>
-        <p>{date}</p>
-    </div>
-</div>
-""")
-
-    index_content = f"""<html>
-<head>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div class="container">
-<div class="posts-grid">
-{''.join(posts_html)}
-</div>
-</div>
-</body>
-</html>"""
-
+                # Nájde nadpis článku
+                try:
+                    title = html.split("<h1>")[1].split("</h1>")[0]
+                except IndexError:
+                    title = "Neznámy článok"
+                # Nájde obrázok
+                try:
+                    img = html.split('<img src="')[1].split('"')[0]
+                except IndexError:
+                    img = "../images/placeholder.png"
+                posts.append({"title": title, "file": f, "img": img})
+    
+    index_html = """
+    <html>
+    <head>
+        <link rel="stylesheet" href="style.css">
+        <title>Faceless AI Site</title>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Blog</h1>
+            <div class="posts-grid">
+    """
+    for post in posts:
+        index_html += f"""
+        <div class="post-card">
+            <a href="posts/{post['file']}">
+                <img src="{post['img']}" alt="{post['title']}">
+                <div class="post-card-content">
+                    <h2>{post['title']}</h2>
+                </div>
+            </a>
+        </div>
+        """
+    index_html += """
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
     with open(INDEX_FILE, "w", encoding="utf-8") as f:
-        f.write(index_content)
-    print(f"Index updated: {INDEX_FILE}")
+        f.write(index_html)
+    
+    print(f"Index aktualizovaný: {INDEX_FILE}")
 
 if __name__ == "__main__":
     update_index()
