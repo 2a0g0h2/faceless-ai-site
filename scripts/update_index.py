@@ -1,69 +1,75 @@
 import os
-import datetime
 
 POSTS_DIR = "posts"
-INDEX_FILE = "../index.html"
+INDEX_FILE = "index.html"
 
 def update_index():
-    # zoznam článkov
     posts = []
+
+    # prejde všetky súbory v posts/
     for f in os.listdir(POSTS_DIR):
         if f.endswith(".html"):
             path = os.path.join(POSTS_DIR, f)
-            mtime = os.path.getmtime(path)
-            posts.append((f, mtime))
+            with open(path, "r", encoding="utf-8") as file:
+                html = file.read()
 
-    # zoradenie podľa dátumu
-    posts.sort(key=lambda x: x[1], reverse=True)
+                # titulok
+                if "<h1>" in html:
+                    title = html.split("<h1>")[1].split("</h1>")[0]
+                else:
+                    title = f
 
-    # vygenerovanie HTML
-    post_items = ""
-    for f, _ in posts:
-        filepath = os.path.join(POSTS_DIR, f)
-        with open(filepath, "r", encoding="utf-8") as pf:
-            html = pf.read()
+                # dátum – ak chýba, nastavíme default
+                if '<p class="date">' in html:
+                    date = html.split('<p class="date">')[1].split("</p>")[0]
+                else:
+                    date = "Unknown date"
 
-            # vyber title, excerpt a cover image
-            title = html.split("<h1>")[1].split("</h1>")[0]
-            date = html.split('<p class="date">')[1].split("</p>")[0]
-            excerpt = html.split("<p>")[1].split("</p>")[0]
-            cover = ""
-            if '<img src="' in html:
-                cover = html.split('<img src="')[1].split('"')[0]
+                # obrázok – ak chýba, použijeme placeholder
+                if '<img src="' in html:
+                    image = html.split('<img src="')[1].split('"')[0]
+                else:
+                    image = "https://source.unsplash.com/800x400/?abstract,ai"
 
-        post_items += f"""
+                posts.append((date, title, f, image))
+
+    # zoradíme podľa dátumu (najnovšie navrch)
+    posts.sort(reverse=True, key=lambda x: x[0])
+
+    # vygenerujeme nový obsah index.html
+    cards = ""
+    for date, title, filename, image in posts:
+        cards += f"""
         <div class="post-card">
-            <a href="posts/{f}">
-                <img src="{cover}" alt="cover" class="thumb">
+            <a href="posts/{filename}">
+                <img src="{image}" alt="{title}">
                 <h2>{title}</h2>
                 <p class="date">{date}</p>
-                <p>{excerpt}</p>
             </a>
         </div>
         """
 
-    index_html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Faceless AI Blog</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <header>
-        <h1>Faceless AI Blog</h1>
-        <p>Daily auto-generated posts about AI, technology and the future 🚀</p>
-    </header>
-    <main class="post-grid">
-        {post_items}
-    </main>
-</body>
-</html>"""
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Faceless AI Blog</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="container">
+            <h1>Faceless AI Blog</h1>
+            <div class="posts-grid">
+                {cards}
+            </div>
+        </div>
+    </body>
+    </html>
+    """
 
     with open(INDEX_FILE, "w", encoding="utf-8") as f:
-        f.write(index_html)
-
-    print("✅ Index updated with", len(posts), "posts")
+        f.write(html_content)
 
 if __name__ == "__main__":
     update_index()
