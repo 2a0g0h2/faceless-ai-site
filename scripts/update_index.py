@@ -1,51 +1,44 @@
 import os
-from pathlib import Path
-import frontmatter
 
-POSTS_DIR = Path("posts")
-INDEX_FILE = Path("index.html")
+POSTS_DIR = "posts"
+IMAGES_DIR = "static/images"
+INDEX_FILE = "index.html"
 
-posts = []
-for file in sorted(POSTS_DIR.glob("*.md"), reverse=True):
-    if file.name == "images":
-        continue
-    post = frontmatter.load(file)
-    posts.append({
-        "title": post["title"],
-        "image": post.get("image", ""),
-        "filename": file.name
-    })
+def update_index():
+    posts = [f for f in os.listdir(POSTS_DIR) if f.endswith(".html")]
+    posts.sort(reverse=True)  # Najnovšie hore
 
-html_posts = ""
-for post in posts:
-    html_posts += f"""
-    <div class="post-card">
-        <a href="posts/{post['filename'].replace('.md', '.html')}">
-            <img src="{post['image']}" alt="{post['title']}">
-            <div class="post-card-content">
-                <h2>{post['title']}</h2>
-            </div>
-        </a>
-    </div>
+    cards = ""
+    for post in posts:
+        slug = post.replace(".html", "")
+        img_path = f"images/{slug}.png"
+        cards += f"""
+        <div class="card">
+            <a href="{POSTS_DIR}/{post}">
+                <img src="{img_path}" alt="{slug}" onerror="this.src='images/default.png'">
+                <h2>{slug.replace('-', ' ').title()}</h2>
+            </a>
+        </div>
+        """
+
+    html_template = f"""
+    <html>
+    <head>
+        <title>Faceless AI Blog</title>
+        <style>
+            .card {{ display:inline-block; margin:10px; border:1px solid #ccc; padding:10px; }}
+            img {{ width:200px; height:150px; object-fit:cover; }}
+        </style>
+    </head>
+    <body>
+        <h1>Faceless AI Blog</h1>
+        {cards}
+    </body>
+    </html>
     """
 
-INDEX_HTML = f"""
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Faceless AI Site</title>
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
-<div class="container">
-    <div class="posts-grid">
-        {html_posts}
-    </div>
-</div>
-</body>
-</html>
-"""
+    with open(INDEX_FILE, "w", encoding="utf-8") as f:
+        f.write(html_template)
 
-with open(INDEX_FILE, "w") as f:
-    f.write(INDEX_HTML)
+if __name__ == "__main__":
+    update_index()
