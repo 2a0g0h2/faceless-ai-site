@@ -1,70 +1,83 @@
 import os
 import random
 import datetime
+import requests
+import subprocess
 
 POSTS_DIR = "../posts"
-IMAGES_SOURCE = "https://source.unsplash.com/800x400/?"
 
-TOPICS = [
-    "artificial intelligence", "technology", "business", "innovation",
-    "cybersecurity", "future", "creativity", "science", "startups", "data"
-]
+# 📌 Funkcia na získanie náhodného obrázka z Unsplash
+def get_random_image():
+    keywords = ["technology", "ai", "future", "digital", "cyber", "virtual"]
+    query = random.choice(keywords)
+    url = f"https://source.unsplash.com/800x400/?{query}"
+    return url
 
-def generate_excerpt(content, length=200):
-    """Take the first sentence(s) as excerpt"""
-    clean = content.replace("\n", " ")
-    return clean[:length].rsplit(" ", 1)[0] + "..."
-
+# 📌 Funkcia na generovanie článku
 def generate_post():
-    # pick topic
-    topic = random.choice(TOPICS)
-    title = f"{topic.title()} Insights {random.randint(100,999)}"
+    # názov a dátum
+    title = "AI Trends " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    filename = f"{date}-{title.replace(' ', '-')}.html"
+    slug = title.lower().replace(" ", "-").replace(":", "")
+    filename = f"{POSTS_DIR}/{slug}.html"
 
-    # generate fake article text (placeholder paragraphs)
-    paragraphs = []
-    for i in range(8):  # 8 odsekov
-        p = f"This is paragraph {i+1} about {topic}. " + \
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " * 3
-        paragraphs.append(p)
+    # obrázok
+    cover_image = get_random_image()
 
-    content = "\n\n".join(f"<p>{p}</p>" for p in paragraphs)
+    # článok (jednoduchý text na ukážku, môže sa rozšíriť o AI generovanie obsahu)
+    paragraphs = [
+        "Artificial Intelligence (AI) is evolving at an unprecedented pace. Companies and researchers worldwide are exploring new ways to apply machine learning, automation, and neural networks to solve real-world problems.",
+        "One of the biggest trends is the integration of AI into everyday life – from smart assistants to autonomous vehicles and advanced healthcare solutions.",
+        "As technology advances, ethical questions become more pressing. Discussions around privacy, bias, and the potential risks of AI are shaping how societies adapt to this powerful tool.",
+        "Looking ahead, AI is expected to play a central role in reshaping industries, economies, and the way humans interact with machines."
+    ]
 
-    # excerpt
-    excerpt = generate_excerpt(paragraphs[0])
+    content = "\n".join([f"<p>{p}</p>" for p in paragraphs])
 
-    # cover image
-    cover_image = f"{IMAGES_SOURCE}{topic.replace(' ', '%20')}"
-
-    # HTML template
+    # HTML šablóna článku
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>{title}</title>
-  <link rel="stylesheet" href="../style.css">
+    <meta charset="UTF-8">
+    <title>{title}</title>
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
-  <article class="post">
-    <h1>{title}</h1>
-    <p class="date">{date}</p>
-    <img src="{cover_image}" alt="{topic}" class="cover">
-    {content}
-  </article>
+    <article class="post">
+        <h1>{title}</h1>
+        <p class="date">{date}</p>
+        <img src="{cover_image}" alt="cover image" class="cover">
+        {content}
+    </article>
 </body>
 </html>"""
 
-    os.makedirs(POSTS_DIR, exist_ok=True)
-    path = os.path.join(POSTS_DIR, filename)
-    with open(path, "w", encoding="utf-8") as f:
+    # uloženie súboru
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(html)
 
-    return {"filename": filename, "title": title, "date": date, "excerpt": excerpt, "cover": cover_image}
+    print(f"✅ Článok uložený: {filename}")
+    return {
+        "title": title,
+        "date": date,
+        "filename": filename,
+        "excerpt": paragraphs[0],
+        "cover_image": cover_image
+    }
 
+# 📌 Hlavný program
 def main():
+    if not os.path.exists(POSTS_DIR):
+        os.makedirs(POSTS_DIR)
+
     post_data = generate_post()
-    print("Generated:", post_data["filename"])
+
+    # hneď po vygenerovaní spusti update_index.py
+    try:
+        subprocess.run(["python3", "scripts/update_index.py"], check=True)
+        print("✅ Index bol úspešne aktualizovaný 🚀")
+    except Exception as e:
+        print(f"❌ Chyba pri aktualizácii indexu: {e}")
 
 if __name__ == "__main__":
     main()
