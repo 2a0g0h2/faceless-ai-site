@@ -2,8 +2,8 @@ name: Generate Daily Post
 
 on:
   schedule:
-    - cron: "0 7 * * *"   # spustí sa každý deň o 07:00 UTC
-  workflow_dispatch:       # možnosť spustiť ručne
+    - cron: "0 7 * * *"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,8 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip install requests
-          pip install Pillow
+          pip install requests Pillow python-frontmatter
 
       - name: Generate post
         run: python3 scripts/generate_post.py
