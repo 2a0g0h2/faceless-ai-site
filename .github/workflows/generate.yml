@@ -2,28 +2,36 @@ name: Generate Daily Post
 
 on:
   schedule:
-    - cron: "0 7 * * *"   # každý deň o 07:00 UTC
-  workflow_dispatch:      # možnosť spustiť manuálne
+    - cron: "0 7 * * *"   # spustí sa každý deň o 07:00 UTC
+  workflow_dispatch:       # možnosť spustiť ručne
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      - name: Generate new post
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install requests
+
+      - name: Generate post
         run: python3 scripts/generate_post.py
 
-      - name: Commit and push
+      - name: Update index
+        run: python3 scripts/update_index.py
+
+      - name: Commit and push changes
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add .
-          git commit -m "📝 Auto-generated daily post"
+          git commit -m "Auto-generate post" || echo "No changes to commit"
           git push
