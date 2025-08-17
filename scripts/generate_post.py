@@ -2,82 +2,127 @@ import os
 import random
 import datetime
 import requests
-import subprocess
 
-POSTS_DIR = "../posts"
+# Cesty
+POSTS_DIR = "posts"
+TEMPLATE_FILE = "templates/post_template.html"
+INDEX_FILE = "index.html"
 
-# 📌 Funkcia na získanie náhodného obrázka z Unsplash
+# Unsplash API – náhodné obrázky
+UNSPLASH_URL = "https://source.unsplash.com/800x600/?technology,ai,future,abstract"
+
 def get_random_image():
-    keywords = ["technology", "ai", "future", "digital", "cyber", "virtual"]
-    query = random.choice(keywords)
-    url = f"https://source.unsplash.com/800x400/?{query}"
-    return url
+    return UNSPLASH_URL
 
-# 📌 Funkcia na generovanie článku
-def generate_post():
-    # názov a dátum
-    title = "AI Trends " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-    date = datetime.datetime.now().strftime("%Y-%m-%d")
-    slug = title.lower().replace(" ", "-").replace(":", "")
-    filename = f"{POSTS_DIR}/{slug}.html"
-
-    # obrázok
-    cover_image = get_random_image()
-
-    # článok (jednoduchý text na ukážku, môže sa rozšíriť o AI generovanie obsahu)
+def generate_content():
+    """Vygeneruje článok s odsekmi a podnadpismi."""
     paragraphs = [
-        "Artificial Intelligence (AI) is evolving at an unprecedented pace. Companies and researchers worldwide are exploring new ways to apply machine learning, automation, and neural networks to solve real-world problems.",
-        "One of the biggest trends is the integration of AI into everyday life – from smart assistants to autonomous vehicles and advanced healthcare solutions.",
-        "As technology advances, ethical questions become more pressing. Discussions around privacy, bias, and the potential risks of AI are shaping how societies adapt to this powerful tool.",
-        "Looking ahead, AI is expected to play a central role in reshaping industries, economies, and the way humans interact with machines."
+        "Artificial Intelligence (AI) is rapidly transforming the way we interact with technology. From personalized recommendations to self-driving cars, the applications are vast and evolving every day.",
+        "One of the most fascinating aspects of AI is its ability to learn and adapt. Unlike traditional software, machine learning models improve with more data, creating smarter systems over time.",
+        "AI also raises important ethical questions. Issues such as bias in algorithms, privacy, and the future of work are central to the debate about how we should use these technologies.",
+        "Despite the challenges, the future of AI looks promising. It has the potential to revolutionize industries, improve healthcare, and even assist in tackling climate change."
     ]
 
-    content = "\n".join([f"<p>{p}</p>" for p in paragraphs])
+    # Podnadpisy
+    headers = [
+        "Introduction to AI",
+        "The Power of Machine Learning",
+        "Ethical Considerations",
+        "The Road Ahead"
+    ]
 
-    # HTML šablóna článku
-    html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{title}</title>
-    <link rel="stylesheet" href="../style.css">
-</head>
-<body>
-    <article class="post">
-        <h1>{title}</h1>
-        <p class="date">{date}</p>
-        <img src="{cover_image}" alt="cover image" class="cover">
-        {content}
-    </article>
-</body>
-</html>"""
+    # Kombinácia do HTML
+    content = ""
+    for h, p in zip(headers, paragraphs):
+        content += f"<h2>{h}</h2>\n<p>{p}</p>\n"
 
-    # uloženie súboru
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(html)
+    return content
 
-    print(f"✅ Článok uložený: {filename}")
-    return {
-        "title": title,
-        "date": date,
-        "filename": filename,
-        "excerpt": paragraphs[0],
-        "cover_image": cover_image
-    }
+def create_post():
+    """Vytvorí nový článok podľa šablóny."""
+    date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+    title = f"Daily AI Insights - {date_str}"
+    filename = f"{date_str}-post.html"
+    filepath = os.path.join(POSTS_DIR, filename)
 
-# 📌 Hlavný program
+    # Načítať šablónu
+    with open(TEMPLATE_FILE, "r", encoding="utf-8") as f:
+        template = f.read()
+
+    # Vložiť obsah
+    cover_image = get_random_image()
+    content = generate_content()
+
+    post_html = template.format(
+        title=title,
+        date=date_str,
+        cover_image=cover_image,
+        content=content
+    )
+
+    # Uložiť článok
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(post_html)
+
+    return filename, title, cover_image
+
+def update_index(posts_data):
+    """Aktualizuje index.html so zoznamom článkov."""
+    posts_html = ""
+    for filename, title, cover in posts_data:
+        posts_html += f"""
+        <div class="post-card">
+            <a href="posts/{filename}">
+                <img src="{cover}" alt="{title}">
+                <div class="post-card-content">
+                    <h2>{title}</h2>
+                    <p>Read more...</p>
+                </div>
+            </a>
+        </div>
+        """
+
+    index_html = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Faceless AI Blog</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="container">
+            <h1>Faceless AI Blog</h1>
+            <div class="posts-grid">
+                {posts_html}
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    with open(INDEX_FILE, "w", encoding="utf-8") as f:
+        f.write(index_html)
+
 def main():
-    if not os.path.exists(POSTS_DIR):
-        os.makedirs(POSTS_DIR)
+    os.makedirs(POSTS_DIR, exist_ok=True)
 
-    post_data = generate_post()
+    # Vytvoriť nový post
+    filename, title, cover = create_post()
 
-    # hneď po vygenerovaní spusti update_index.py
-    try:
-        subprocess.run(["python3", "scripts/update_index.py"], check=True)
-        print("✅ Index bol úspešne aktualizovaný 🚀")
-    except Exception as e:
-        print(f"❌ Chyba pri aktualizácii indexu: {e}")
+    # Načítať existujúce
+    posts = []
+    for f in os.listdir(POSTS_DIR):
+        if f.endswith(".html"):
+            path = os.path.join(POSTS_DIR, f)
+            date_str = f.split("-post.html")[0]
+            posts.append((f, f"Daily AI Insights - {date_str}", cover))
+
+    # Zoradiť podľa dátumu (najnovšie hore)
+    posts.sort(reverse=True)
+
+    # Aktualizovať index
+    update_index(posts)
 
 if __name__ == "__main__":
     main()
