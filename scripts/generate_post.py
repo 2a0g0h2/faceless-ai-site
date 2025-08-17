@@ -1,32 +1,51 @@
 import os
-import uuid
-from datetime import datetime
-from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
+import requests
+from PIL import Image
+import frontmatter
+import markdown
+from slugify import slugify
 
-POSTS_DIR = Path("posts")
-IMAGES_DIR = POSTS_DIR / "images"
-IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-
-def generate_image(title: str):
-    filename = f"{uuid.uuid4().hex}.png"
-    path = IMAGES_DIR / filename
-
-    img = Image.new("RGB", (800, 400), color=(30, 30, 30))
-    d = ImageDraw.Draw(img)
-    font = ImageFont.load_default()
-    d.text((20, 180), title, fill=(102, 179, 255), font=font)
-    img.save(path)
-    return f"images/{filename}"
+POSTS_DIR = "posts"
+IMAGES_DIR = "static/images"
 
 def generate_post():
-    title = f"AI Post {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"
-    content = f"This is an AI-generated post titled **{title}**.\n\nLorem ipsum content here."
-    image_path = generate_image(title)
-    
-    filename = POSTS_DIR / f"{uuid.uuid4().hex}.md"
-    with open(filename, "w") as f:
-        f.write(f"---\ntitle: {title}\ndate: {datetime.utcnow()}\nimage: {image_path}\n---\n\n{content}")
+    # Príklad dát (tu môže byť tvoj AI generátor)
+    title = "Testovací článok"
+    content = "Toto je obsah článku..."
+    image_url = "https://via.placeholder.com/600x400"
+
+    # Vytvor slug pre názov súboru
+    slug = slugify(title)
+    post_md_file = os.path.join(POSTS_DIR, f"{slug}.md")
+    post_html_file = os.path.join(POSTS_DIR, f"{slug}.html")
+    image_file = os.path.join(IMAGES_DIR, f"{slug}.png")
+
+    # Stiahni obrázok
+    img_data = requests.get(image_url).content
+    os.makedirs(IMAGES_DIR, exist_ok=True)
+    with open(image_file, "wb") as f:
+        f.write(img_data)
+
+    # Ulož markdown
+    os.makedirs(POSTS_DIR, exist_ok=True)
+    post = frontmatter.Post(content, title=title)
+    with open(post_md_file, "w", encoding="utf-8") as f:
+        frontmatter.dump(post, f)
+
+    # Prevod do HTML
+    html_content = markdown.markdown(content)
+    html_template = f"""
+    <html>
+    <head><title>{title}</title></head>
+    <body>
+        <h1>{title}</h1>
+        <img src="../{image_file}" alt="{title}">
+        {html_content}
+    </body>
+    </html>
+    """
+    with open(post_html_file, "w", encoding="utf-8") as f:
+        f.write(html_template)
 
 if __name__ == "__main__":
     generate_post()
