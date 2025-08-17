@@ -1,50 +1,70 @@
 import os
 import random
-from datetime import datetime
+import datetime
 
 POSTS_DIR = "../posts"
-IMAGES_DIR = "../images"
+IMAGES_SOURCE = "https://source.unsplash.com/800x400/?"
 
-def get_random_image():
-    imgs = [f for f in os.listdir(IMAGES_DIR) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
-    if not imgs:
-        return None
-    return f"images/{random.choice(imgs)}"
+TOPICS = [
+    "artificial intelligence", "technology", "business", "innovation",
+    "cybersecurity", "future", "creativity", "science", "startups", "data"
+]
+
+def generate_excerpt(content, length=200):
+    """Take the first sentence(s) as excerpt"""
+    clean = content.replace("\n", " ")
+    return clean[:length].rsplit(" ", 1)[0] + "..."
 
 def generate_post():
-    title = f"Awesome Post {random.randint(1,1000)}"
-    excerpt = "This is a short excerpt of the article."
-    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    cover_image = get_random_image() or "images/default.jpg"
+    # pick topic
+    topic = random.choice(TOPICS)
+    title = f"{topic.title()} Insights {random.randint(100,999)}"
+    date = datetime.datetime.now().strftime("%Y-%m-%d")
+    filename = f"{date}-{title.replace(' ', '-')}.html"
 
-    filename = f"{POSTS_DIR}/{title.replace(' ', '_')}.html"
-    content = f"""
-<!DOCTYPE html>
+    # generate fake article text (placeholder paragraphs)
+    paragraphs = []
+    for i in range(8):  # 8 odsekov
+        p = f"This is paragraph {i+1} about {topic}. " + \
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " * 3
+        paragraphs.append(p)
+
+    content = "\n\n".join(f"<p>{p}</p>" for p in paragraphs)
+
+    # excerpt
+    excerpt = generate_excerpt(paragraphs[0])
+
+    # cover image
+    cover_image = f"{IMAGES_SOURCE}{topic.replace(' ', '%20')}"
+
+    # HTML template
+    html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>{title}</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>{title}</title>
+  <link rel="stylesheet" href="../style.css">
 </head>
 <body>
-<div class="post-container">
+  <article class="post">
     <h1>{title}</h1>
-    <img src="{cover_image}" alt="{title}" class="cover-image">
-    <p>{excerpt}</p>
-    <p>Full content goes here. Lorem ipsum dolor sit amet, consectetur adipiscing elit...</p>
-</div>
+    <p class="date">{date}</p>
+    <img src="{cover_image}" alt="{topic}" class="cover">
+    {content}
+  </article>
 </body>
-</html>
-"""
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(content)
-    print(f"Generated {filename}")
+</html>"""
+
+    os.makedirs(POSTS_DIR, exist_ok=True)
+    path = os.path.join(POSTS_DIR, filename)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    return {"filename": filename, "title": title, "date": date, "excerpt": excerpt, "cover": cover_image}
 
 def main():
-    if not os.path.exists(POSTS_DIR):
-        os.makedirs(POSTS_DIR)
-    generate_post()
+    post_data = generate_post()
+    print("Generated:", post_data["filename"])
 
 if __name__ == "__main__":
     main()
-
