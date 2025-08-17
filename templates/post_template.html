@@ -2,15 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{title}</title>
+  <title>{{title}}</title>
   <link rel="stylesheet" href="../style.css">
 </head>
 <body>
-  <div class="post-container">
-    <h1>{title}</h1>
-    <div class="meta">Published on {date}</div>
-    <img src="{cover_image}" alt="Cover image for {title}">
-    {content}
+  <div class="container">
+    <h1>{{title}}</h1>
+    <p class="date">{{date}}</p>
+    <img src="{{image_url}}" alt="{{title}}">
+    <div class="content">
+      {{content}}
+    </div>
+    <p><a href="../index.html">← Back to Home</a></p>
   </div>
 </body>
 </html>
