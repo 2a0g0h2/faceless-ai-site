@@ -1,99 +1,77 @@
 import os
-import json
 import random
+import json
 from datetime import datetime
 
-# Cesty
-POSTS_DIR = "../posts"
-IMAGES_DIR = "../images"
+# --- Nastavenie cesty k priečinku images ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # cesta ku scripts/
+IMAGES_DIR = os.path.join(BASE_DIR, "..", "images")    # ../images vzhľadom na scripts/
+POSTS_DIR = os.path.join(BASE_DIR, "..", "posts")
 
-# Náhodné témy a úvody
-TOPICS = [
-    "The Future of AI in Everyday Life",
-    "Top 10 Productivity Hacks for Remote Workers",
-    "Sustainable Living: Small Changes, Big Impact",
-    "How to Invest Smartly in 2025",
-    "Mindfulness Techniques for a Busy Mind"
-]
-
-EXCERPTS = [
-    "Discover the latest trends and insights in this topic.",
-    "Learn actionable tips to improve your daily routine.",
-    "A guide to making smarter decisions and living sustainably.",
-    "Investing strategies that can boost your financial future.",
-    "Techniques to calm your mind and enhance focus."
-]
-
-# Funkcia pre náhodný obrázok
+# --- Funkcia na výber náhodného obrázku ---
 def get_random_image():
     imgs = [f for f in os.listdir(IMAGES_DIR) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
     if not imgs:
-        return "default.jpg"
-    return random.choice(imgs)
+        return None
+    return os.path.join("../images", random.choice(imgs))
 
-# Hlavná funkcia
-def main():
-    title = random.choice(TOPICS)
-    excerpt = random.choice(EXCERPTS)
-    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    cover_image = get_random_image()
-    
-    # Body článku
-    body = f"""
-## Introduction
-This article discusses "{title}" and provides key insights and practical advice.
+# --- Funkcia na generovanie článku ---
+def generate_article():
+    title = "Test Article " + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    date_str = datetime.now().isoformat()
+    excerpt = "This is a short excerpt for the article."
+    body = """
+    <h2>Introduction</h2>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    <h2>Main Content</h2>
+    <p>Vestibulum nec odio ipsum. Suspendisse cursus malesuada facilisis.</p>
+    <h2>Conclusion</h2>
+    <p>Donec vel mauris quam. Integer mollis nulla at sapien.</p>
+    """
+    cover_image = get_random_image() or ""
 
-## Main Content
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.
-
-## Conclusion
-In conclusion, staying informed and adopting best practices can greatly improve your results in this area.
-"""
-
-    # HTML obsah
-    html_content = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{excerpt}">
-    <title>{title}</title>
-    <link rel="stylesheet" href="../style.css">
-</head>
-<body>
-    <div class="post">
-        <h1>{title}</h1>
-        <p><em>{date}</em></p>
-        <img src="../images/{cover_image}" alt="Cover image" style="max-width:600px; height:auto;">
-        {body}
-    </div>
-</body>
-</html>
-"""
-
-    # JSON obsah
-    json_content = {
+    return {
         "title": title,
-        "date": date,
+        "date": date_str,
         "excerpt": excerpt,
-        "cover_image": cover_image,
-        "body": body
+        "body": body,
+        "cover_image": cover_image
     }
 
-    # Uloženie súborov
-    safe_title = title.replace(" ", "_").replace("/", "_")
-    os.makedirs(POSTS_DIR, exist_ok=True)
-    
-    with open(os.path.join(POSTS_DIR, f"{safe_title}.md"), "w") as f_md:
-        f_md.write(body)
-    
-    with open(os.path.join(POSTS_DIR, f"{safe_title}.html"), "w") as f_html:
-        f_html.write(html_content)
-    
-    with open(os.path.join(POSTS_DIR, f"{safe_title}.json"), "w") as f_json:
-        json.dump(json_content, f_json, indent=4)
+# --- Uloženie článku ---
+def save_article(article):
+    filename_base = article["title"].replace(" ", "_").replace(":", "")
+    md_path = os.path.join(POSTS_DIR, filename_base + ".md")
+    html_path = os.path.join(POSTS_DIR, filename_base + ".html")
+    json_path = os.path.join(POSTS_DIR, filename_base + ".json")
 
-    print(f"Article '{title}' generated successfully!")
+    # Markdown
+    with open(md_path, "w", encoding="utf-8") as f:
+        f.write(f"# {article['title']}\n\n{article['body']}")
+
+    # HTML
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(f"""
+        <html>
+        <head><title>{article['title']}</title></head>
+        <body>
+        <img src="{article['cover_image']}" style="max-width:100%;height:auto;">
+        {article['body']}
+        </body>
+        </html>
+        """)
+
+    # JSON
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(article, f, ensure_ascii=False, indent=4)
+
+# --- Hlavná funkcia ---
+def main():
+    if not os.path.exists(POSTS_DIR):
+        os.makedirs(POSTS_DIR)
+    article = generate_article()
+    save_article(article)
+    print(f"Article '{article['title']}' generated.")
 
 if __name__ == "__main__":
     main()
