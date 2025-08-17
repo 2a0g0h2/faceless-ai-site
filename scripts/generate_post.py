@@ -1,46 +1,32 @@
 import os
 import uuid
 from datetime import datetime
+from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
-POSTS_DIR = "posts"
-IMAGES_DIR = "images"
+POSTS_DIR = Path("posts")
+IMAGES_DIR = POSTS_DIR / "images"
+IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
-os.makedirs(POSTS_DIR, exist_ok=True)
-os.makedirs(IMAGES_DIR, exist_ok=True)
+def generate_image(title: str):
+    filename = f"{uuid.uuid4().hex}.png"
+    path = IMAGES_DIR / filename
 
-def generate_unique_image(filename):
-    # Vytvorí jednoduchý unikátny obrázok (placeholder)
-    img = Image.new('RGB', (800, 400), color=(255, 200, 200))
+    img = Image.new("RGB", (800, 400), color=(30, 30, 30))
     d = ImageDraw.Draw(img)
-    d.text((10, 10), f"Article {filename}", fill=(0, 0, 0))
-    img.save(os.path.join(IMAGES_DIR, filename + ".png"))
+    font = ImageFont.load_default()
+    d.text((20, 180), title, fill=(102, 179, 255), font=font)
+    img.save(path)
+    return f"images/{filename}"
 
 def generate_post():
-    uid = str(uuid.uuid4())[:8]
-    date_str = datetime.utcnow().strftime("%Y-%m-%d")
-    title = f"AI Generated Article {uid}"
-    filename = f"{date_str}_{uid}.html"
-
-    # Generovanie unikátneho obrázku
-    generate_unique_image(uid)
-
-    content = f"""
-    <html>
-        <head><title>{title}</title></head>
-        <body>
-            <h1>{title}</h1>
-            <img src="../{IMAGES_DIR}/{uid}.png" alt="{title}">
-            <p>This is an AI generated post created on {date_str}.</p>
-        </body>
-    </html>
-    """
-
-    with open(os.path.join(POSTS_DIR, filename), "w", encoding="utf-8") as f:
-        f.write(content)
-
-    print(f"Generated post: {filename}")
+    title = f"AI Post {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"
+    content = f"This is an AI-generated post titled **{title}**.\n\nLorem ipsum content here."
+    image_path = generate_image(title)
+    
+    filename = POSTS_DIR / f"{uuid.uuid4().hex}.md"
+    with open(filename, "w") as f:
+        f.write(f"---\ntitle: {title}\ndate: {datetime.utcnow()}\nimage: {image_path}\n---\n\n{content}")
 
 if __name__ == "__main__":
     generate_post()
-
