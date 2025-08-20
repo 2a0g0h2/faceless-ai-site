@@ -2,36 +2,34 @@ name: Generate Daily Post
 
 on:
   schedule:
-    - cron: "0 7 * * *"   # každý deň 07:00 UTC
+    - cron: "0 6 * * *" # každý deň o 6:00 UTC
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install dependencies
-        run: |
-          python3 -m pip install --upgrade pip
-          pip install requests Pillow python-frontmatter markdown python-slugify
+        run: pip install requests python-dotenv
 
       - name: Generate post
         run: python3 scripts/generate_post.py
-
-      - name: Update index
-        run: python3 scripts/update_index.py
+        env:
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
 
       - name: Commit and push changes
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add .
-          git commit -m "Auto-generate post" || echo "No changes to commit"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add posts/*.json images/*
+          git commit -m "Add new daily post"
           git push
