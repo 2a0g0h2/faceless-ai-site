@@ -1,71 +1,68 @@
 import os
-import requests
 import json
+import requests
 from datetime import datetime
-import re
 import random
 
-# 🔑 API key z Pixabay (nastav v GitHub Secrets alebo .env)
 PIXABAY_API_KEY = os.getenv("PIXABAY_API_KEY")
+POSTS_DIR = "posts"
 
-# ✨ Témy a ich titulky (rozšírené, aby mali rôznorodosť)
 TOPICS = [
-    ("blockchain", "How Blockchain is Transforming Human Experience"),
-    ("artificial intelligence", "AI and the Future of Human Creativity"),
-    ("virtual reality", "Exploring New Worlds in Virtual Reality"),
-    ("sustainability", "Sustainability as the Core of Innovation"),
-    ("cybersecurity", "Cybersecurity in the Age of AI"),
-    ("space", "The Human Journey Into Space"),
-    ("health", "Digital Health and the Future of Medicine"),
-    ("education", "How Technology is Shaping Education"),
-    ("metaverse", "Living in the Metaverse: Opportunities and Risks"),
-    ("robotics", "Robotics and Human Collaboration")
+    ("The Future of Artificial Intelligence", "ai"),
+    ("How Blockchain is Transforming Human Experience", "blockchain"),
+    ("The Rise of Quantum Computing", "quantum"),
+    ("Exploring the Metaverse", "metaverse"),
+    ("Ethics in AI Development", "ethics"),
 ]
 
-def slugify(text):
-    return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
-
-def fetch_pixabay_image(query):
-    url = f"https://pixabay.com/api/?key={PIXABAY_API_KEY}&q={query}&image_type=photo&orientation=horizontal&per_page=10"
+def get_pixabay_image(query):
+    url = f"https://pixabay.com/api/?key={PIXABAY_API_KEY}&q={query}&image_type=photo&orientation=horizontal&per_page=50"
     response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        if data["hits"]:
-            # vyber náhodný obrázok z 10 výsledkov
-            return random.choice(data["hits"])["largeImageURL"]
-    return None
+    data = response.json()
+
+    if "hits" in data and len(data["hits"]) > 0:
+        return random.choice(data["hits"])["webformatURL"]
+
+    return ""
 
 def generate_post():
-    topic, title = random.choice(TOPICS)
-    slug = slugify(title)
+    if not os.path.exists(POSTS_DIR):
+        os.makedirs(POSTS_DIR)
 
-    # 🖼️ stiahni obrázok z Pixabay
-    image_url = fetch_pixabay_image(topic)
-    if image_url:
-        img_data = requests.get(image_url).content
-        os.makedirs("public/images", exist_ok=True)
-        image_path = f"public/images/{slug}.jpg"
-        with open(image_path, "wb") as f:
-            f.write(img_data)
-        image_field = f"/images/{slug}.jpg"
-    else:
-        image_field = "/images/default.jpg"
+    # vyber náhodnú tému
+    title, topic = random.choice(TOPICS)
+    slug = title.lower().replace(" ", "_").replace("/", "_")
+    date = datetime.today().strftime("%Y-%m-%d")
 
-    # 📝 JSON štruktúra
-    post = {
-        "date": datetime.now().strftime("%Y-%m-%d"),
+    # obrázok z Pixabay
+    image_url = get_pixabay_image(topic)
+
+    # obsah článku
+    content = f"This article explores the topic of {topic}. More details will follow soon."
+
+    # HTML verzia článku
+    html_file = os.path.join(POSTS_DIR, f"{slug}.html")
+    with open(html_file, "w", encoding="utf-8") as f:
+        f.write(f"<html><head><title>{title}</title></head><body>")
+        f.write(f"<h1>{title}</h1>")
+        if image_url:
+            f.write(f'<img src="{image_url}" alt="{title}" style="max-width:600px;"><br>')
+        f.write(f"<p>{content}</p>")
+        f.write("</body></html>")
+
+    # JSON meta súbor
+    meta = {
+        "date": date,
         "title": title,
         "topic": topic,
-        "image": image_field,
-        "content": f"This article explores the topic of {topic}. More details will follow soon."
+        "image": image_url,
+        "content": content,
     }
+    json_file = os.path.join(POSTS_DIR, f"{slug}.json")
+    with open(json_file, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=4)
 
-    # 💾 uloženie do posts/
-    os.makedirs("posts", exist_ok=True)
-    with open(f"posts/{slug}.json", "w") as f:
-        json.dump(post, f, indent=4)
-
-    print(f"✅ Post generated: posts/{slug}.json with image {image_field}")
+    print(f"✅ Post generated: {title}")
 
 if __name__ == "__main__":
     generate_post()
