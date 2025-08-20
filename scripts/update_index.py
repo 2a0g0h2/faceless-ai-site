@@ -1,107 +1,52 @@
 import os
-import json
+from datetime import datetime
 
 POSTS_DIR = "posts"
-INDEX_FILE = "index.html"
+OUTPUT_FILE = "index.html"
+IMAGES_DIR = "static/images"
+
+def slug_to_title(slug: str) -> str:
+    """Prevedie názov súboru na čitateľný titulok"""
+    return slug.replace("-", " ").title()
 
 def update_index():
     posts = []
-    for f in os.listdir(POSTS_DIR):
-        if f.endswith(".json"):
-            with open(os.path.join(POSTS_DIR, f), "r", encoding="utf-8") as jf:
-                try:
-                    data = json.load(jf)
-                    posts.append(data)
-                except Exception as e:
-                    print(f"❌ Error reading {f}: {e}")
 
-    # zoradíme podľa dátumu (najnovší hore)
-    posts.sort(key=lambda x: x.get("date", ""), reverse=True)
+    for filename in os.listdir(POSTS_DIR):
+        if filename.endswith(".html"):
+            slug = filename[:-5]  # bez .html
+            title = slug_to_title(slug)
+            path = os.path.join(POSTS_DIR, filename)
 
-    # vygenerujeme .html články
-    for post in posts:
-        slug = post["title"].replace(" ", "-").lower()
-        html_file = os.path.join(POSTS_DIR, f"{slug}.html")
+            # defaultný obrázok
+            image_path = os.path.join(IMAGES_DIR, slug + ".jpg")
+            if os.path.exists(image_path):
+                image = image_path
+            else:
+                image = os.path.join(IMAGES_DIR, "default.png")
 
-        html_content = f"""
-        <html>
-        <head>
-            <title>{post['title']}</title>
-            <meta charset="utf-8">
-        </head>
-        <body>
-            <h1>{post['title']}</h1>
-            <img src="{post['image']}" alt="{post['title']}" style="max-width:600px;"><br>
-            <p><i>{post['date']}</i></p>
-            <p>{post['content']}</p>
-            <p><a href="../index.html">← Back to Home</a></p>
-        </body>
-        </html>
-        """
+            posts.append({
+                "title": title,
+                "slug": slug,
+                "image": image,
+                "date": datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d")
+            })
 
-        with open(html_file, "w", encoding="utf-8") as f:
-            f.write(html_content.strip())
+    # zoradíme od najnovšieho
+    posts.sort(key=lambda x: x["date"], reverse=True)
 
-    # vytvoríme index.html s kartami článkov
-    cards = ""
-    for post in posts:
-        slug = post["title"].replace(" ", "-").lower()
-        html_file = f"{POSTS_DIR}/{slug}.html"
-
-        cards += f"""
-        <div class="card">
-            <a href="{html_file}">
-                <img src="{post['image']}" alt="{post['title']}" onerror="this.src='images/default.png'">
-                <h2>{post['title']}</h2>
-                <p>{post['date']}</p>
-            </a>
-        </div>
-        """
-
-    html_template = f"""
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Faceless AI Blog</title>
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                margin: 20px;
-                background: #f9f9f9;
-            }}
-            .card {{
-                display:inline-block;
-                margin:15px;
-                border:1px solid #ddd;
-                padding:10px;
-                width:220px;
-                vertical-align:top;
-                background:#fff;
-                box-shadow:0 2px 5px rgba(0,0,0,0.1);
-                border-radius:8px;
-            }}
-            img {{
-                width:200px;
-                height:150px;
-                object-fit:cover;
-                border-radius:4px;
-            }}
-            h1 {{ margin-bottom: 30px; }}
-            h2 {{ font-size:18px; margin:10px 0; }}
-            p {{ font-size:14px; color:#666; }}
-        </style>
-    </head>
-    <body>
-        <h1>Faceless AI Blog</h1>
-        {cards}
-    </body>
-    </html>
-    """
-
-    with open(INDEX_FILE, "w", encoding="utf-8") as f:
-        f.write(html_template.strip())
-
-    print("✅ Index a články boli úspešne aktualizované.")
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        f.write("<html><head><title>Faceless AI Blog</title></head><body>\n")
+        f.write("<h1>Faceless AI Blog</h1>\n")
+        for post in posts:
+            f.write(f"""
+            <div style="margin-bottom: 40px;">
+                <h2><a href="posts/{post['slug']}.html">{post['title']}</a></h2>
+                <img src="{post['image']}" alt="{post['title']}" style="max-width:600px;"><br>
+                <small>{post['date']}</small>
+            </div>
+            """)
+        f.write("</body></html>")
 
 if __name__ == "__main__":
     update_index()
