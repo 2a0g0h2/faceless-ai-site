@@ -1,35 +1,24 @@
 import os
+import json
 from datetime import datetime
 
 POSTS_DIR = "posts"
 OUTPUT_FILE = "index.html"
-IMAGES_DIR = "static/images"
-
-def slug_to_title(slug: str) -> str:
-    """Prevedie názov súboru na čitateľný titulok"""
-    return slug.replace("-", " ").title()
 
 def update_index():
     posts = []
 
     for filename in os.listdir(POSTS_DIR):
-        if filename.endswith(".html"):
-            slug = filename[:-5]  # bez .html
-            title = slug_to_title(slug)
-            path = os.path.join(POSTS_DIR, filename)
-
-            # defaultný obrázok
-            image_path = os.path.join(IMAGES_DIR, slug + ".jpg")
-            if os.path.exists(image_path):
-                image = image_path
-            else:
-                image = os.path.join(IMAGES_DIR, "default.png")
+        if filename.endswith(".json"):  # berieme meta JSON
+            filepath = os.path.join(POSTS_DIR, filename)
+            with open(filepath, "r", encoding="utf-8") as f:
+                post = json.load(f)
 
             posts.append({
-                "title": title,
-                "slug": slug,
-                "image": image,
-                "date": datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d")
+                "title": post.get("title", "Untitled"),
+                "slug": filename.replace(".json", ""),
+                "image": post.get("image", ""),
+                "date": post.get("date", datetime.today().strftime("%Y-%m-%d"))
             })
 
     # zoradíme od najnovšieho
