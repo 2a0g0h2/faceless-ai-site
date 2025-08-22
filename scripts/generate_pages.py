@@ -18,27 +18,38 @@ def generate_pages():
         slug = filename.replace(".json", ".html")
         page_path = os.path.join(DOCS_DIR, slug)
 
-        html_content = f"""
-<!DOCTYPE html>
-<html lang="en">
+        title = post.get("title", slug.replace(".html", "").replace("-", " ").title())
+        date = post.get("date", "")
+        image = post.get("image", "")
+        content = post.get("content", "")
+
+        # rozsekaj obsah na odseky podľa \n\n
+        paragraphs = "".join(f"<p>{para.strip()}</p>" for para in content.split("\n\n") if para.strip())
+
+        html_content = f"""<!DOCTYPE html>
+<html lang="sk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{post['title']}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{title}</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>{post['title']}</h1>
-    <p><em>{post['date']}</em></p>
-    <img src="{post['image']}" alt="{post['title']}" style="max-width:600px;"><br><br>
-    {"".join(f"<p>{paragraph}</p>" for paragraph in post['content'].split("\\n\\n"))}
-    <br><br>
-    <a href="index.html">← Back to home</a>
+  <article class="post-container">
+    <h1>{title}</h1>
+    <p class="meta">{date}</p>
+    {f'<img src="{image}" alt="{title}" onerror="this.onerror=null;this.src=\'images/default.svg\'">' if image else ''}
+    {paragraphs or '<p></p>'}
+    <p><a href="index.html">← Naspäť na domov</a></p>
+  </article>
 </body>
 </html>
 """
 
         with open(page_path, "w", encoding="utf-8") as f:
             f.write(html_content)
+
+    print("✅ HTML stránky článkov vygenerované do /docs")
 
 if __name__ == "__main__":
     generate_pages()
