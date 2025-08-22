@@ -24,13 +24,15 @@ def update_index():
     # vygenerujeme obsah index.html
     post_entries = ""
     for post, slug in posts:
+        image_html = f'<img src="{post.get("image", "https://via.placeholder.com/600x400")}" alt="{post["title"]}" style="max-width:600px;"><br>'
+        
         post_entry = f"""
         <div style="margin-bottom:40px;">
             <a href="posts/{slug}.html" style="text-decoration:none; color:inherit;">
-                <img src="{post['image']}" alt="{post['title']}" style="max-width:600px;"><br>
+                {image_html}
                 <h2>{post['title']}</h2>
             </a>
-            <p>{post['content']}</p>
+            <p>{post.get('content', '')}</p>
         </div>
         """
         post_entries += post_entry
