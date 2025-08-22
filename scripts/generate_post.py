@@ -1,66 +1,75 @@
-import json
 import os
+import json
 import random
-from datetime import datetime
 import requests
+from datetime import datetime
+import textwrap
 
 PIXABAY_API_KEY = os.getenv("PIXABAY_API_KEY")
 
-topics = [
+TOPICS = [
     "artificial intelligence",
     "blockchain",
     "virtual reality",
-    "metaverse",
     "quantum computing",
-    "cybersecurity",
-    "digital identity",
+    "sustainability",
     "space exploration",
-    "green energy",
+    "biotechnology",
+    "cybersecurity",
+    "robotics",
     "future of work"
 ]
 
-def fetch_pixabay_image(query):
-    url = f"https://pixabay.com/api/?key={PIXABAY_API_KEY}&q={query}&image_type=photo&orientation=horizontal&per_page=10"
-    response = requests.get(url)
-    data = response.json()
-    if "hits" in data and data["hits"]:
-        return random.choice(data["hits"])["webformatURL"]
-    return "https://via.placeholder.com/600x400?text=No+Image"
+def generate_long_content(topic: str) -> str:
+    # jednoduchý text pre 800+ slov (môžeš neskôr nahradiť GPT volaním)
+    paragraph = (
+        f"{topic.capitalize()} is one of the most fascinating fields of our time. "
+        "It influences society, economics, and the way humans interact with technology. "
+        "In this article, we will explore its history, current state, and potential future impact. "
+    )
+    text = " ".join([paragraph] * 50)  # cca 800+ slov
+    wrapped = "\n\n".join(textwrap.wrap(text, width=100))
+    return wrapped
 
-def generate_content(topic):
-    """Generate ~800 words of placeholder content in paragraphs"""
-    paragraphs = []
-    for i in range(8):  # ~100 words per paragraph
-        paragraph = (
-            f"{topic.title()} is shaping the modern world in unexpected ways. "
-            f"In this section, we explore perspective {i+1}, reflecting on how "
-            f"technological, social, and ethical questions are influenced by {topic}. "
-            f"The discussion emphasizes challenges, opportunities, and future outlooks."
-        )
-        paragraphs.append(paragraph)
-    return "\n\n".join(paragraphs)
+def fetch_image(topic: str) -> str:
+    url = f"https://pixabay.com/api/?key={PIXABAY_API_KEY}&q={topic}&image_type=photo&per_page=10"
+    r = requests.get(url)
+    data = r.json()
+    hits = data.get("hits", [])
+    if not hits:
+        return None
+    img_url = hits[0]["webformatURL"]
+
+    os.makedirs("images", exist_ok=True)
+    img_path = f"images/{topic.replace(' ', '_')}.jpg"
+
+    img_data = requests.get(img_url).content
+    with open(img_path, "wb") as f:
+        f.write(img_data)
+
+    return img_path
 
 def main():
-    topic = random.choice(topics)
-    title = f"How {topic.title()} is Transforming Human Experience"
-    date = datetime.now().strftime("%Y-%m-%d")
-    image_url = fetch_pixabay_image(topic)
+    topic = random.choice(TOPICS)
+    today = datetime.today().strftime("%Y-%m-%d")
 
-    post = {
-        "date": date,
-        "title": title,
-        "topic": topic,
-        "image": image_url,
-        "content": generate_content(topic)
-    }
+    title = f"How {topic.title()} is Changing Our World"
+    filename = f"posts/{today}-{topic.replace(' ', '_')}.json"
 
     os.makedirs("posts", exist_ok=True)
-    filename = f"posts/{date}-{topic.replace(' ', '_')}.json"
 
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(post, f, ensure_ascii=False, indent=4)
+    image_path = fetch_image(topic)
 
-    print(f"Generated post saved as {filename}")
+    post = {
+        "date": today,
+        "title": title,
+        "topic": topic,
+        "image": image_path,
+        "content": generate_long_content(topic)
+    }
+
+    with open(filename, "w") as f:
+        json.dump(post, f, indent=4)
 
 if __name__ == "__main__":
     main()
