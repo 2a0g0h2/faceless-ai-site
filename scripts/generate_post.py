@@ -1,75 +1,106 @@
 import os
 import json
 import random
-import requests
+import openai
 from datetime import datetime
-import textwrap
 
-PIXABAY_API_KEY = os.getenv("PIXABAY_API_KEY")
+# API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
+POSTS_DIR = "posts"
+IMAGES_DIR = "static/images"
+
+# topics pool
 TOPICS = [
-    "artificial intelligence",
-    "blockchain",
-    "virtual reality",
-    "quantum computing",
-    "sustainability",
-    "space exploration",
-    "biotechnology",
-    "cybersecurity",
-    "robotics",
-    "future of work"
+    "Future of Artificial Intelligence",
+    "Impact of AI on Creativity",
+    "Ethics of AI in Daily Life",
+    "How AI is Changing Business",
+    "AI and Human Emotions",
+    "AI in Education",
+    "AI and Cybersecurity",
+    "AI in Healthcare",
+    "AI and Climate Change",
+    "AI in Entertainment"
 ]
 
-def generate_long_content(topic: str) -> str:
-    # jednoduchý text pre 800+ slov (môžeš neskôr nahradiť GPT volaním)
-    paragraph = (
-        f"{topic.capitalize()} is one of the most fascinating fields of our time. "
-        "It influences society, economics, and the way humans interact with technology. "
-        "In this article, we will explore its history, current state, and potential future impact. "
+def generate_article(topic):
+    """Generate an article around 800 words with intro, body (paragraphs, subheadings), and conclusion."""
+    prompt = f"""
+    Write a well-structured article of about 800 words on the topic: "{topic}".
+    - Start with an engaging introduction (2 paragraphs).
+    - Add 2–3 subheadings with relevant sections (use ### Subheading style).
+    - Write clear, flowing paragraphs (4–6 sentences each).
+    - End with a short conclusion (2 paragraphs).
+    - Do not use bullet points, only paragraphs and subheadings.
+    """
+
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=prompt,
+        max_tokens=1600,
+        temperature=0.7
     )
-    text = " ".join([paragraph] * 50)  # cca 800+ slov
-    wrapped = "\n\n".join(textwrap.wrap(text, width=100))
-    return wrapped
 
-def fetch_image(topic: str) -> str:
-    url = f"https://pixabay.com/api/?key={PIXABAY_API_KEY}&q={topic}&image_type=photo&per_page=10"
-    r = requests.get(url)
-    data = r.json()
-    hits = data.get("hits", [])
-    if not hits:
-        return None
-    img_url = hits[0]["webformatURL"]
+    text = response.choices[0].text.strip()
+    return text
 
-    os.makedirs("images", exist_ok=True)
-    img_path = f"images/{topic.replace(' ', '_')}.jpg"
+def format_to_html(text):
+    """Convert raw text into HTML with <p> and <h2> tags."""
+    paragraphs = text.split("\n")
+    html_content = ""
+    for i, p in enumerate(paragraphs):
+        if len(p.strip()) > 0:
+            if i == 0:
+                html_content += f"<p><em>{p.strip()}</em></p>\n"   # intro
+            elif "###" in p:  
+                html_content += f"<h2>{p.replace('###','').strip()}</h2>\n"
+            else:
+                html_content += f"<p>{p.strip()}</p>\n"
+    return html_content
 
-    img_data = requests.get(img_url).content
-    with open(img_path, "wb") as f:
-        f.write(img_data)
-
-    return img_path
-
-def main():
+def generate_post():
     topic = random.choice(TOPICS)
-    today = datetime.today().strftime("%Y-%m-%d")
+    raw_article = generate_article(topic)
+    html_content = format_to_html(raw_article)
 
-    title = f"How {topic.title()} is Changing Our World"
-    filename = f"posts/{today}-{topic.replace(' ', '_')}.json"
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    filename = f"{timestamp}.html"
+    filepath = os.path.join(POSTS_DIR, filename)
 
-    os.makedirs("posts", exist_ok=True)
+    # use Unsplash for image
+    image_url = f"https://source.unsplash.com/800x400/?{topic.replace(' ', ',')}"
 
-    image_path = fetch_image(topic)
+    # save article HTML
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{topic}</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <h1>{topic}</h1>
+    <img src="../{image_url}" alt="{topic}" style="max-width:600px;"><br>
+    {html_content}
+</body>
+</html>
+""")
 
-    post = {
-        "date": today,
-        "title": title,
-        "topic": topic,
-        "image": image_path,
-        "content": generate_long_content(topic)
+    # save metadata
+    meta = {
+        "title": topic,
+        "filename": filename,
+        "image": image_url,
+        "content": html_content
     }
 
-    with open(filename, "w") as f:
-        json.dump(post, f, indent=4)
+    meta_path = os.path.join(POSTS_DIR, f"{timestamp}.json")
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=4)
 
 if __name__ == "__main__":
-    main()
+    os.makedirs(POSTS_DIR, exist_ok=True)
+    os.makedirs(IMAGES_DIR, exist_ok=True)
+    generate_post()
