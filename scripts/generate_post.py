@@ -1,106 +1,84 @@
 import os
 import json
 import random
-import openai
 from datetime import datetime
+from openai import OpenAI
 
-# API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Nastavenie OpenAI klienta
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 POSTS_DIR = "posts"
 IMAGES_DIR = "static/images"
 
-# topics pool
-TOPICS = [
-    "Future of Artificial Intelligence",
-    "Impact of AI on Creativity",
-    "Ethics of AI in Daily Life",
-    "How AI is Changing Business",
-    "AI and Human Emotions",
-    "AI in Education",
-    "AI and Cybersecurity",
-    "AI in Healthcare",
-    "AI and Climate Change",
-    "AI in Entertainment"
+topics = [
+    "Artificial Intelligence in Daily Life",
+    "Future of Renewable Energy",
+    "Impact of Social Media on Society",
+    "Space Exploration and Colonization",
+    "Climate Change and Solutions",
+    "Evolution of Technology in Education",
+    "Healthcare Innovations with AI",
+    "Cybersecurity in Modern World",
+    "The Future of Remote Work",
+    "Digital Art and Creativity"
 ]
 
 def generate_article(topic):
-    """Generate an article around 800 words with intro, body (paragraphs, subheadings), and conclusion."""
     prompt = f"""
-    Write a well-structured article of about 800 words on the topic: "{topic}".
-    - Start with an engaging introduction (2 paragraphs).
-    - Add 2–3 subheadings with relevant sections (use ### Subheading style).
-    - Write clear, flowing paragraphs (4–6 sentences each).
-    - End with a short conclusion (2 paragraphs).
-    - Do not use bullet points, only paragraphs and subheadings.
+    Write a well-structured article of about 800 words on the topic: '{topic}'.
+    The article should include:
+    - An engaging introduction (2–3 paragraphs)
+    - Several body sections with subheadings
+    - A clear conclusion that wraps up the ideas
+    - Natural paragraph flow like in a newspaper or magazine
+    Use simple but professional language.
     """
 
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
-        max_tokens=1600,
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a professional journalist and article writer."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=2000,
         temperature=0.7
     )
 
-    text = response.choices[0].text.strip()
-    return text
+    return response.choices[0].message.content.strip()
 
-def format_to_html(text):
-    """Convert raw text into HTML with <p> and <h2> tags."""
-    paragraphs = text.split("\n")
-    html_content = ""
-    for i, p in enumerate(paragraphs):
-        if len(p.strip()) > 0:
-            if i == 0:
-                html_content += f"<p><em>{p.strip()}</em></p>\n"   # intro
-            elif "###" in p:  
-                html_content += f"<h2>{p.replace('###','').strip()}</h2>\n"
-            else:
-                html_content += f"<p>{p.strip()}</p>\n"
-    return html_content
+def generate_image(topic):
+    from openai import OpenAI
+    # Tu môžeš neskôr nahradiť Unsplash API ak nechceš míňať kredity
+    # Zatiaľ necháme fallback placeholder
+    return "https://source.unsplash.com/800x400/?" + topic.replace(" ", ",")
 
 def generate_post():
-    topic = random.choice(TOPICS)
-    raw_article = generate_article(topic)
-    html_content = format_to_html(raw_article)
-
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"{timestamp}.html"
-    filepath = os.path.join(POSTS_DIR, filename)
-
-    # use Unsplash for image
-    image_url = f"https://source.unsplash.com/800x400/?{topic.replace(' ', ',')}"
-
-    # save article HTML
-    with open(filepath, "w", encoding="utf-8") as f:
-        f.write(f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{topic}</title>
-    <link rel="stylesheet" href="../style.css">
-</head>
-<body>
-    <h1>{topic}</h1>
-    <img src="../{image_url}" alt="{topic}" style="max-width:600px;"><br>
-    {html_content}
-</body>
-</html>
-""")
-
-    # save metadata
-    meta = {
-        "title": topic,
-        "filename": filename,
-        "image": image_url,
-        "content": html_content
-    }
-
-    meta_path = os.path.join(POSTS_DIR, f"{timestamp}.json")
-    with open(meta_path, "w", encoding="utf-8") as f:
-        json.dump(meta, f, ensure_ascii=False, indent=4)
-
-if __name__ == "__main__":
     os.makedirs(POSTS_DIR, exist_ok=True)
     os.makedirs(IMAGES_DIR, exist_ok=True)
+
+    topic = random.choice(topics)
+    article = generate_article(topic)
+
+    filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".json"
+    filepath = os.path.join(POSTS_DIR, filename)
+
+    image_url = generate_image(topic)
+
+    # Vytvoríme krátky náhľad
+    preview = article[:150].replace("\n", " ") + "..."
+
+    post = {
+        "title": topic,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "image": image_url,
+        "preview": preview,
+        "content": article
+    }
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(post, f, ensure_ascii=False, indent=4)
+
+    print(f"Generated post saved to {filepath}")
+
+if __name__ == "__main__":
     generate_post()
