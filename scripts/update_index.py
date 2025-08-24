@@ -6,48 +6,72 @@ INDEX_FILE = "index.html"
 
 def update_index():
     posts = []
-    for file in os.listdir(POSTS_DIR):
-        if file.endswith(".json"):
-            with open(os.path.join(POSTS_DIR, file), "r", encoding="utf-8") as f:
-                posts.append(json.load(f))
 
-    # sort by newest first
-    posts.sort(key=lambda x: x["filename"], reverse=True)
+    for filename in os.listdir(POSTS_DIR):
+        if filename.endswith(".json"):
+            filepath = os.path.join(POSTS_DIR, filename)
+            with open(filepath, "r", encoding="utf-8") as f:
+                post = json.load(f)
+                post["filename"] = filename.replace(".json", ".html")
+                posts.append(post)
 
-    # build HTML for index
-    html_posts = ""
-    for post in posts:
-        excerpt = post["content"].replace("<p>", "").replace("</p>", "")
-        excerpt = excerpt.replace("<h2>", "").replace("</h2>", "")
-        excerpt = excerpt.strip()[:250] + "..."  # 2–3 sentences
+    # zoradíme podľa dátumu (novšie hore)
+    posts.sort(key=lambda x: x["date"], reverse=True)
 
-        html_posts += f"""
-        <div class="post-preview">
-            <h2>{post['title']}</h2>
-            <img src="{post['image']}" alt="{post['title']}" style="max-width:400px;"><br>
-            <p>{excerpt}</p>
-            <a href="posts/{post['filename']}">Read more →</a>
-        </div>
-        <hr>
-        """
-
-    # final index.html
-    index_html = f"""<!DOCTYPE html>
+    html_content = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Faceless AI Blog</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: auto;
+            padding: 20px;
+        }}
+        .post {{
+            border-bottom: 1px solid #333;
+            padding: 20px 0;
+        }}
+        .post img {{
+            max-width: 100%;
+            border-radius: 10px;
+        }}
+        a {{
+            color: #1e90ff;
+            text-decoration: none;
+        }}
+        a:hover {{
+            text-decoration: underline;
+        }}
+    </style>
 </head>
 <body>
     <h1>Faceless AI Blog</h1>
-    {html_posts}
-</body>
-</html>
 """
 
+    for post in posts:
+        html_content += f"""
+    <div class="post">
+        <h2><a href="pages/{post['filename']}">{post['title']}</a></h2>
+        <p><em>{post['date']}</em></p>
+        <img src="{post['image']}" alt="{post['title']}">
+        <p>{post['preview']} <a href="pages/{post['filename']}">Read more</a></p>
+    </div>
+"""
+
+    html_content += """
+</body>
+</html>"""
+
     with open(INDEX_FILE, "w", encoding="utf-8") as f:
-        f.write(index_html)
+        f.write(html_content)
+
+    print(f"Updated {INDEX_FILE}")
 
 if __name__ == "__main__":
     update_index()
