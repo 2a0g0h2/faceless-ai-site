@@ -1,8 +1,24 @@
 import os
 import json
+import re
 
 POSTS_DIR = "posts"
 PAGES_DIR = "pages"
+
+def format_content(text):
+    """Prevedie Markdown štýl na HTML (## → h2, ### → h3, inak <p>)"""
+    html = ""
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("### "):
+            html += f"<h3>{line[4:].strip()}</h3>\n"
+        elif line.startswith("## "):
+            html += f"<h2>{line[3:].strip()}</h2>\n"
+        else:
+            html += f"<p>{line}</p>\n"
+    return html
 
 def generate_pages():
     os.makedirs(PAGES_DIR, exist_ok=True)
@@ -35,6 +51,18 @@ def generate_pages():
         h1 {{
             margin-bottom: 20px;
         }}
+        h2 {{
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }}
+        h3 {{
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #ddd;
+        }}
         img {{
             max-width: 100%;
             border-radius: 10px;
@@ -49,7 +77,7 @@ def generate_pages():
     <h1>{post['title']}</h1>
     <p><em>{post['date']}</em></p>
     <img src="{post['image']}" alt="{post['title']}">
-    {"".join(f"<p>{para}</p>" for para in post['content'].split("\\n") if para.strip())}
+    {format_content(post['content'])}
 </body>
 </html>"""
 
