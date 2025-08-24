@@ -1,44 +1,43 @@
-name: Build Faceless AI Site
+name: Generate Daily Post
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * *"   # každý deň o 08:00 UTC
+  workflow_dispatch:       # ručný štart
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.x'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Generate post
-        env:
-          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      - name: Generate JSON post (800+ slov + obrázok)
         run: python scripts/generate_post.py
 
-      - name: Generate pages
+      - name: Build HTML pages from JSON
         run: python scripts/generate_pages.py
 
-      - name: Update index
+      - name: Update index.html
         run: python scripts/update_index.py
 
-      - name: Commit and push changes
+      - name: Commit & push changes
         run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add posts docs
-          git commit -m "Update posts and site [skip ci]" || echo "No changes to commit"
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add index.html posts/*.json posts/*.html images/*
+          git commit -m "Daily auto-post + pages + index" || echo "No changes to commit"
           git push
