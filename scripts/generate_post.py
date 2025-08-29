@@ -4,81 +4,76 @@ import random
 from datetime import datetime
 from openai import OpenAI
 
-# Nastavenie OpenAI klienta
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI()
 
-POSTS_DIR = "posts"
-IMAGES_DIR = "static/images"
+# model sa dá nastaviť v GitHub Actions (default gpt-4o-mini)
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
-topics = [
-    "Artificial Intelligence in Daily Life",
-    "Future of Renewable Energy",
-    "Impact of Social Media on Society",
-    "Space Exploration and Colonization",
-    "Climate Change and Solutions",
-    "Evolution of Technology in Education",
-    "Healthcare Innovations with AI",
-    "Cybersecurity in Modern World",
-    "The Future of Remote Work",
-    "Digital Art and Creativity"
+# tvoje fixné témy (napr. zaujímavé oblasti, ktoré chceš pravidelne pokrývať)
+FIXED_TOPICS = [
+    "The future of electric cars",
+    "Top productivity hacks for remote workers",
+    "Healthy eating on a budget",
+    "Best practices for personal finance in 2025",
+    "The psychology of social media use",
 ]
 
-def generate_article(topic):
-    prompt = f"""
-    Write a well-structured article of about 800 words on the topic: '{topic}'.
-    The article should include:
-    - An engaging introduction (2–3 paragraphs)
-    - Several body sections with subheadings
-    - A clear conclusion that wraps up the ideas
-    - Natural paragraph flow like in a newspaper or magazine
-    Use simple but professional language.
+def get_trending_topics():
+    """Získa témy podľa trendov (GPT vygeneruje nové návrhy)."""
+    prompt = """
+    Generate 10 trending article topics for a blog. 
+    Mix technology, lifestyle, health, entertainment, travel, finance, and culture. 
+    Return them as a simple JSON list of strings.
     """
-
+    
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model=MODEL,
         messages=[
-            {"role": "system", "content": "You are a professional journalist and article writer."},
+            {"role": "system", "content": "You are a trend researcher."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=2000,
-        temperature=0.7
+        max_tokens=500,
     )
+    
+    try:
+        topics = json.loads(response.choices[0].message.content.strip())
+    except Exception:
+        topics = ["AI trends in 2025", "Healthy morning routines", "Top travel destinations"]
+    
+    return topics
 
-    return response.choices[0].message.content.strip()
-
-def generate_image(topic):
-    from openai import OpenAI
-    # Tu môžeš neskôr nahradiť Unsplash API ak nechceš míňať kredity
-    # Zatiaľ necháme fallback placeholder
-    return "https://source.unsplash.com/800x400/?" + topic.replace(" ", ",")
+def generate_article(topic):
+    """Vygeneruje článok na danú tému."""
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": "You are a professional blog writer."},
+            {"role": "user", "content": f"Write a detailed SEO-friendly blog article about: {topic}. Length: ~800 words."}
+        ],
+        max_tokens=1200,
+    )
+    return response.choices[0].message.content
 
 def generate_post():
-    os.makedirs(POSTS_DIR, exist_ok=True)
-    os.makedirs(IMAGES_DIR, exist_ok=True)
-
+    # získa trendy témy
+    trending = get_trending_topics()
+    # spojíme s fixnými
+    topics = trending + FIXED_TOPICS
     topic = random.choice(topics)
+
     article = generate_article(topic)
-
-    filename = datetime.now().strftime("%Y%m%d%H%M%S") + ".json"
-    filepath = os.path.join(POSTS_DIR, filename)
-
-    image_url = generate_image(topic)
-
-    # Vytvoríme krátky náhľad
-    preview = article[:150].replace("\n", " ") + "..."
 
     post = {
         "title": topic,
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "image": image_url,
-        "preview": preview,
+        "date": datetime.now().strftime("%Y-%m-%d"),
         "content": article
     }
 
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(post, f, ensure_ascii=False, indent=4)
+    filename = f"content/posts/{datetime.now().strftime('%Y-%m-%d')}-{topic.replace(' ', '-')}.json"
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(post, f, ensure_ascii=False, indent=2)
 
-    print(f"Generated post saved to {filepath}")
+    print(f"✅ Generated post saved to {filename}")
 
 if __name__ == "__main__":
     generate_post()
