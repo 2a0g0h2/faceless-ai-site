@@ -23,19 +23,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Generate post
+      - name: Generate all (post + index + pages)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          python scripts/generate_post.py
-
-      - name: Update index.html
-        run: |
-          python scripts/update_index.py
-
-      - name: Generate post pages
-        run: |
-          python scripts/generate_pages.py
+          python scripts/generate_all.py
 
       - name: Commit and push changes
         run: |
